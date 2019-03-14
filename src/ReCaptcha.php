@@ -41,6 +41,7 @@ use yii\widgets\InputWidget;
 class ReCaptcha extends InputWidget
 {
     const JS_API_URL = '//www.google.com/recaptcha/api.js';
+    const JS_API_URL_ALT = '//www.recaptcha.net/recaptcha/api.js';
 
     const THEME_LIGHT = 'light';
     const THEME_DARK = 'dark';
@@ -57,6 +58,9 @@ class ReCaptcha extends InputWidget
 
     /** @var string Your secret. */
     public $secret;
+    
+    /** @var string The url for the js API file. Some countries (China) have banned the google domain so this setting allows alternatives. https://developers.google.com/recaptcha/docs/faq#can-i-use-recaptcha-globally [[JS_API_URL]] (default) or [[JS_API_URL_ALT]]*/
+    public $js_api_url;
 
     /** @var string The color theme of the widget. [[THEME_LIGHT]] (default) or [[THEME_DARK]] */
     public $theme;
@@ -106,9 +110,19 @@ class ReCaptcha extends InputWidget
             'render' => 'explicit',
             'onload' => 'recaptchaOnloadCallback',
         ]);
+        
+        if (empty($this->js_api_url)) {
+            /** @var ReCaptcha $reCaptcha */
+            $reCaptcha = Yii::$app->reCaptcha;
+            if ($reCaptcha && !empty($reCaptcha->js_api_url)) {
+                $this->js_api_url = $reCaptcha->js_api_url;
+            } else {
+                $this->js_api_url = self::JS_API_URL;
+            }
+        }
 
         $view->registerJsFile(
-            self::JS_API_URL . '?' . $arguments,
+            $this->js_api_url . '?' . $arguments,
             ['position' => $view::POS_END, 'async' => true, 'defer' => true]
         );
         $view->registerJs(
